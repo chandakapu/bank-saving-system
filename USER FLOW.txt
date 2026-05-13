@@ -1,0 +1,42 @@
+USER FLOW
+
+Open New Account
+
+graph TD
+    A[Start: Click Open New Account] --> B[Select Customer]
+    B --> C[Select Deposito Type / Packet]
+    C --> D[Input Initial Balance]
+    D --> E{Validate Inputs?}
+    E -- Invalid --> F[Show Error: Invalid Data]
+    E -- Valid --> G[Generate New Account ID]
+    G --> H[Link Customer ID & Deposito ID to Account]
+    H --> I[Set Initial Balance]
+    I --> J[Save Account Record to Database]
+    J --> K[End: Show Success Message & New Account Details]
+
+Deposit
+
+graph TD
+    A[Start: User clicks Deposit] --> B[Select Account]
+    B --> C[Input Amount & Deposit Date]
+    C --> D{Validate Amount > 0?}
+    D -- Invalid --> E[Show Error: Invalid Amount]
+    D -- Valid --> F[Update Database: Add Balance & Save Date]
+    F --> G[End: Show Success Message]
+
+Withdrawal
+
+graph TD
+    A[Start: User clicks Withdraw] --> B[Select Account]
+    B --> C[Input Amount & Withdrawal Date]
+    C --> D{Validate Input & Balance?}
+    D -- Invalid --> E[Show Error: Insufficient Funds]
+    D -- Valid --> F[Compare Withdrawal Date vs Deposit Date]
+    F --> G[Calculate # of Months]
+    G --> H[Fetch Account's Deposito Yearly Return]
+    H --> I[Calculate Ending Balance]
+    I --> J[Display Ending Balance to User]
+    J --> K{User Confirms?}
+    K -- No --> L[Cancel Transaction]
+    K -- Yes --> M[Update Database Balance]
+    M --> N[End: Show Success Message]

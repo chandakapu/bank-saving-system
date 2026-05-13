@@ -1,0 +1,39 @@
+DATABASE DESIGN
+
+erDiagram
+    CUSTOMER {
+        int id PK
+        string name
+    }
+    
+    DEPOSITO_TYPE {
+        int id PK
+        string name "e.g., Bronze, Silver, Gold"
+        float yearly_return "e.g., 3.0, 5.0, 7.0"
+    }
+    
+    ACCOUNT {
+        int id PK
+        string packet "Account packet identifier"
+        decimal balance "Current saldo (cached)"
+        string status "e.g., ACTIVE, CLOSED"
+        int customer_id FK
+        int deposito_type_id FK
+    }
+    
+    TRANSACTION {
+        int id PK
+        string type "DEPOSIT or WITHDRAWAL"
+        decimal amount
+        decimal running_balance "Balance after this transaction"
+        decimal ending_balance "Computed on withdrawal, NULL for deposit"
+        date transaction_date
+        int account_id FK
+        int deposit_tx_id FK "Self-reference: Points to DEPOSIT row"
+    }
+
+    %% Relationships
+    CUSTOMER ||--o{ ACCOUNT : "owns (1:N)"
+    DEPOSITO_TYPE ||--o{ ACCOUNT : "assigned to (1:N)"
+    ACCOUNT ||--o{ TRANSACTION : "records (1:N)"
+    TRANSACTION ||--o| TRANSACTION : "withdraws from (1:1)"
