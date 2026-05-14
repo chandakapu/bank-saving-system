@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Toast } from './components/UI';
 import { useToast } from './hooks/useToast';
+import logo from './assets/logo.png';
 import Customers from './components/Customers';
 import DepositoTypes from './components/DepositoTypes';
 import Accounts from './components/Accounts';
@@ -47,8 +48,7 @@ export default function App() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-icon"><i className="ti ti-building-bank"></i></div>
-          <span className="brand-text">BankSave</span>
+          <img src={logo} alt="BankSave Logo" className="brand-logo" />
         </div>
         <nav className="sidebar-nav">
           <div className="nav-section-label">Management</div>

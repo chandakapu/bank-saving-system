@@ -18,7 +18,7 @@ jobs:
       
       - name: Lint Frontend
         run: |
-          cd bank-saving-system/frontend
+          cd frontend
           npm install
           npm run lint
 
@@ -43,11 +43,11 @@ jobs:
       
       - name: Initialize Database
         run: |
-          mysql -h 127.0.0.1 -u root -proot bank_saving_system < bank-saving-system/database/migrations/migrations.sql
+          mysql -h 127.0.0.1 -u root -proot bank_saving_system < database/migrations/migrations.sql
 
       - name: Run Backend API Tests
         run: |
-          cd bank-saving-system/backend
+          cd backend
           npm install
           # Start server in background
           DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASSWORD=root DB_NAME=bank_saving_system PORT=3000 npm run start &
