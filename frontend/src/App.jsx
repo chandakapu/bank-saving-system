@@ -27,7 +27,9 @@ export default function App() {
 
   // Each CRUD screen exposes a topAction trigger via ref
   const handleTopAction = () => {
-    if (actionRef.current) actionRef.current();
+    if (actionRef.current && actionRef.current.openAdd) {
+      actionRef.current.openAdd();
+    }
   };
 
   const renderScreen = () => {
