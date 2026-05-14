@@ -8,7 +8,7 @@ The easiest way to run the entire system (Frontend, Backend, and MySQL) is using
 
 1.  **Clone the repository**:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/chandakapu/bank-saving-system.git
     cd bank-saving-system
     ```
 
