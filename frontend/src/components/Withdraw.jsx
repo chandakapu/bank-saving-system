@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { accountApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { formatMoney } from './UI';
+import { formatMoney } from '../utils';
 
 export default function Withdraw({ showToast }) {
   const { data: accounts, reload: reloadAccounts } = useApi(() => accountApi.getAll());
