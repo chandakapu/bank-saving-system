@@ -40,6 +40,7 @@ All required technical documentation, mockups, and diagrams can be found in the 
 - **Mockup / Wireframes / UI Framework:** Interactive HTML/CSS wireframes demonstrating the user interface are available in [`docs/wireframes.html`](docs/wireframes.html).
 - **User Journey & Flow:**
   - The UI flows (navigation, opening accounts, transactions) are visually implemented in the wireframes.
+  - The explicit mapping of which REST APIs are called on every screen is documented in [`docs/API_SCREEN_MAP.md`](docs/API_SCREEN_MAP.md).
   - The complex backend sequence and API call flow (especially for withdrawals and interest calculation) is detailed in [`docs/SEQUENCE_DIAGRAM.md`](docs/SEQUENCE_DIAGRAM.md).
 - **Database Design & ERD:** Detailed in [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) and [`docs/ERD.md`](docs/ERD.md).
 - **API Specs & Error Handling:** Available in [`docs/API_SPEC.md`](docs/API_SPEC.md) and [`docs/ERROR_HANDLING.md`](docs/ERROR_HANDLING.md). (A Postman collection is also provided in the `postman/` directory).
