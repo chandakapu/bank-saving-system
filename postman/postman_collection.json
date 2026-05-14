@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "Bank Saving System",
+    "_postman_id": "bank-saving-system-v1",
+    "description": "API collection for the Bank Saving System by Belimbing.ai engineering test.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get all customers",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers"
+          }
+        },
+        {
+          "name": "Get customer by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers/1"
+          }
+        },
+        {
+          "name": "Create customer",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/customers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update customer",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/customers/1",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso Updated\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete customer",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/customers/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deposito Types",
+      "item": [
+        {
+          "name": "Get all deposito types",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/deposito-types"
+          }
+        },
+        {
+          "name": "Get deposito type by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/deposito-types/1"
+          }
+        },
+        {
+          "name": "Create deposito type",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/deposito-types",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deposito Platinum\",\n  \"yearly_return\": 0.0900\n}"
+            }
+          }
+        },
+        {
+          "name": "Update deposito type",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/deposito-types/1",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deposito Bronze Plus\",\n  \"yearly_return\": 0.0400\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete deposito type",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/deposito-types/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Get all accounts",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/accounts"
+          }
+        },
+        {
+          "name": "Get account by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/accounts/1"
+          }
+        },
+        {
+          "name": "Get accounts by customer",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/customers/1/accounts"
+          }
+        },
+        {
+          "name": "Create account",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/accounts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"deposito_type_id\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Update account",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/accounts/1",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deposito_type_id\": 3\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete account",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/accounts/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get transactions for account",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/accounts/1/transactions"
+          }
+        },
+        {
+          "name": "Deposit",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/accounts/1/deposit",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000000,\n  \"transaction_date\": \"2024-01-15\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Withdraw",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/accounts/1/withdraw",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_date\": \"2024-07-15\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
