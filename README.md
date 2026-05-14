@@ -27,7 +27,7 @@ The easiest way to run the entire system (Frontend, Backend, and MySQL) is using
 ## Live Deployment
 
 The application has been deployed using free hosting services:
-- **Frontend**: [Vercel](https://vercel.com/)
+- **Frontend (Live Demo)**: [https://bank-saving-system-rouge.vercel.app/](https://bank-saving-system-rouge.vercel.app/)
 - **Backend API**: [Render](https://render.com/)
 - **Database**: [TiDB](https://en.pingcap.com/tidb-serverless/)
 
