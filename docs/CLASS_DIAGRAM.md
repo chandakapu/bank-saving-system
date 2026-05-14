@@ -1,4 +1,4 @@
-# Class Diagram — Bank Saving System
+# Class Diagram: Bank Saving System
 
 ```mermaid
 classDiagram

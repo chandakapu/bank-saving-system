@@ -1,4 +1,4 @@
-# Sequence Diagram — Withdrawal Flow
+# Sequence Diagram: Withdrawal Flow
 
 ```mermaid
 sequenceDiagram

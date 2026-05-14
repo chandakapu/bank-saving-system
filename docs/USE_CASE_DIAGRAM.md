@@ -1,4 +1,4 @@
-# Use Case Diagram — Bank Saving System
+# Use Case Diagram: Bank Saving System
 
 ```mermaid
 flowchart LR
