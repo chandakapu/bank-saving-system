@@ -24,6 +24,29 @@ The easiest way to run the entire system (Frontend, Backend, and MySQL) is using
 
 ---
 
+## Live Deployment
+
+The application has been deployed using free hosting services:
+- **Frontend**: [Vercel](https://vercel.com/)
+- **Backend API**: [Render](https://render.com/)
+- **Database**: [TiDB](https://en.pingcap.com/tidb-serverless/)
+
+---
+
+## System Specifications & Design
+
+All required technical documentation, mockups, and diagrams can be found in the [`docs/`](docs/) directory:
+
+- **Mockup / Wireframes / UI Framework:** Interactive HTML/CSS wireframes demonstrating the user interface are available in [`docs/wireframes.html`](docs/wireframes.html).
+- **User Journey & Flow:**
+  - The UI flows (navigation, opening accounts, transactions) are visually implemented in the wireframes.
+  - The complex backend sequence and API call flow (especially for withdrawals and interest calculation) is detailed in [`docs/SEQUENCE_DIAGRAM.md`](docs/SEQUENCE_DIAGRAM.md).
+- **Database Design & ERD:** Detailed in [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) and [`docs/ERD.md`](docs/ERD.md).
+- **API Specs & Error Handling:** Available in [`docs/API_SPEC.md`](docs/API_SPEC.md) and [`docs/ERROR_HANDLING.md`](docs/ERROR_HANDLING.md). (A Postman collection is also provided in the `postman/` directory).
+- **UML Diagrams:** Class and Use Case diagrams are available in [`docs/CLASS_DIAGRAM.md`](docs/CLASS_DIAGRAM.md) and [`docs/USE_CASE_DIAGRAM.md`](docs/USE_CASE_DIAGRAM.md).
+
+---
+
 ## Architecture
 
 -   **Frontend**: React (Vite) + Tailwind CSS
