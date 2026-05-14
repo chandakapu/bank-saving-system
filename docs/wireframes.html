@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Saving System Wireframes</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f3;
+      min-height: 100vh;
+      padding: 24px;
+      color: #1a1a18;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: #1a1a18;
+    }
+
+    .app {
+      display: flex;
+      background: #fff;
+      border: 1px solid #e0ded8;
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 600px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e0ded8;
+      padding: 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #888780;
+      padding: 0 16px 12px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #5f5e5a;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .nav-item:hover {
+      background: #f5f5f3;
+    }
+
+    .nav-item.active {
+      color: #1a1a18;
+      background: #f5f5f3;
+      font-weight: 500;
+    }
+
+    .nav-item i {
+      font-size: 16px;
+    }
+
+    /* Main area */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e0ded8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+    }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      border: 1px solid #c8c6c0;
+      border-radius: 8px;
+      background: transparent;
+      color: #1a1a18;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn:hover {
+      background: #f5f5f3;
+    }
+
+    .btn-primary {
+      background: #1a1a18;
+      color: #fff;
+      border-color: #1a1a18;
+    }
+
+    .btn-primary:hover {
+      opacity: .85;
+    }
+
+    .content {
+      padding: 20px;
+      flex: 1;
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Table */
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #e0ded8;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      padding: 10px 16px;
+      background: #f5f5f3;
+      color: #888780;
+      font-weight: 500;
+      text-align: left;
+      border-bottom: 1px solid #e0ded8;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e0ded8;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #fafaf8;
+    }
+
+    tbody td {
+      padding: 10px 16px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      padding: 4px 8px;
+      font-size: 13px;
+      border: 1px solid #e0ded8;
+      border-radius: 6px;
+      background: transparent;
+      color: #888780;
+      cursor: pointer;
+    }
+
+    .icon-btn:hover {
+      background: #f5f5f3;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-gold {
+      background: #faeeda;
+      color: #633806;
+    }
+
+    .badge-silver {
+      background: #f1efe8;
+      color: #444441;
+    }
+
+    .badge-bronze {
+      background: #faece7;
+      color: #712b13;
+    }
+
+    .badge-deposit {
+      background: #eaf3de;
+      color: #27500a;
+    }
+
+    .badge-withdraw {
+      background: #faeeda;
+      color: #633806;
+    }
+
+    /* Forms */
+    .form-card {
+      background: #fff;
+      border: 1px solid #e0ded8;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 400px;
+      margin-top: 16px;
+    }
+
+    .form-card h3 {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #888780;
+      margin-bottom: 4px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 13px;
+      border: 1px solid #c8c6c0;
+      border-radius: 8px;
+      background: #fff;
+      color: #1a1a18;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #888780;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, .06);
+    }
+
+    .form-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* Result card */
+    .result-card {
+      background: #f5f5f3;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 5px 0;
+      border-bottom: 1px solid #e0ded8;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+      font-weight: 500;
+      font-size: 14px;
+      padding-top: 8px;
+    }
+
+    .result-row span:first-child {
+      color: #888780;
+    }
+
+    /* Filter row */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .filter-row select {
+      padding: 6px 10px;
+      font-size: 13px;
+      border: 1px solid #c8c6c0;
+      border-radius: 8px;
+      background: #fff;
+      color: #1a1a18;
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: #888780;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Bank Saving System UI Wireframes</h1>
+
+  <div class="app">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-title">Bank system</div>
+      <div class="nav-item active" onclick="nav('customers', this)">
+        <i class="ti ti-users"></i> Customers
+      </div>
+      <div class="nav-item" onclick="nav('deposito', this)">
+        <i class="ti ti-certificate"></i> Deposito types
+      </div>
+      <div class="nav-item" onclick="nav('accounts', this)">
+        <i class="ti ti-wallet"></i> Accounts
+      </div>
+      <div class="nav-item" onclick="nav('deposit', this)">
+        <i class="ti ti-arrow-down"></i> Deposit
+      </div>
+      <div class="nav-item" onclick="nav('withdraw', this)">
+        <i class="ti ti-arrow-up"></i> Withdraw
+      </div>
+      <div class="nav-item" onclick="nav('transactions', this)">
+        <i class="ti ti-list"></i> Transactions
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <span class="topbar-title" id="page-title">Customers</span>
+        <button class="btn btn-primary" id="top-action" onclick="topAction()">
+          <i class="ti ti-plus"></i>
+          <span id="top-action-label">Add customer</span>
+        </button>
+      </div>
+
+      <div class="content">
+
+        <!-- Customers screen -->
+        <div class="screen active" id="s-customers">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Accounts</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Budi Santoso</td>
+                  <td>2</td>
+                  <td>2024-01-10</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Siti Rahayu</td>
+                  <td>1</td>
+                  <td>2024-01-15</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Ahmad Fauzi</td>
+                  <td>1</td>
+                  <td>2024-02-01</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="form-customers" style="display:none">
+            <div class="form-card">
+              <h3>Add customer</h3>
+              <div class="field">
+                <label>Full name</label>
+                <input type="text" placeholder="e.g. Budi Santoso" />
+              </div>
+              <div class="form-footer">
+                <button class="btn" onclick="hideForm('customers')">Cancel</button>
+                <button class="btn btn-primary">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deposito types screen -->
+        <div class="screen" id="s-deposito">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Yearly return</th>
+                  <th>Monthly return</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><span class="badge badge-bronze">Deposito Bronze</span></td>
+                  <td>3.00%</td>
+                  <td>0.25%</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><span class="badge badge-silver">Deposito Silver</span></td>
+                  <td>5.00%</td>
+                  <td>0.42%</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><span class="badge badge-gold">Deposito Gold</span></td>
+                  <td>7.00%</td>
+                  <td>0.58%</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="form-deposito" style="display:none">
+            <div class="form-card">
+              <h3>Add deposito type</h3>
+              <div class="field">
+                <label>Name</label>
+                <input type="text" placeholder="e.g. Deposito Platinum" />
+              </div>
+              <div class="field">
+                <label>Yearly return (%)</label>
+                <input type="number" placeholder="e.g. 9" />
+              </div>
+              <div class="form-footer">
+                <button class="btn" onclick="hideForm('deposito')">Cancel</button>
+                <button class="btn btn-primary">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accounts screen -->
+        <div class="screen" id="s-accounts">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Deposito type</th>
+                  <th>Balance (Rp)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Budi Santoso</td>
+                  <td><span class="badge badge-silver">Silver</span></td>
+                  <td>5,000,000</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Budi Santoso</td>
+                  <td><span class="badge badge-gold">Gold</span></td>
+                  <td>12,000,000</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Siti Rahayu</td>
+                  <td><span class="badge badge-bronze">Bronze</span></td>
+                  <td>3,500,000</td>
+                  <td>
+                    <div class="actions">
+                      <button class="icon-btn"><i class="ti ti-edit"></i></button>
+                      <button class="icon-btn"><i class="ti ti-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="form-accounts" style="display:none">
+            <div class="form-card">
+              <h3>Open account</h3>
+              <div class="field">
+                <label>Customer</label>
+                <select>
+                  <option>Budi Santoso</option>
+                  <option>Siti Rahayu</option>
+                  <option>Ahmad Fauzi</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Deposito type</label>
+                <select>
+                  <option>Deposito Bronze (3%)</option>
+                  <option>Deposito Silver (5%)</option>
+                  <option>Deposito Gold (7%)</option>
+                </select>
+              </div>
+              <div class="form-footer">
+                <button class="btn" onclick="hideForm('accounts')">Cancel</button>
+                <button class="btn btn-primary">Open account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deposit screen -->
+        <div class="screen" id="s-deposit">
+          <div class="form-card" style="margin-top:0">
+            <h3>Deposit to account</h3>
+            <div class="field">
+              <label>Account</label>
+              <select>
+                <option>Account #1 — Budi Santoso (Silver)</option>
+                <option>Account #2 — Budi Santoso (Gold)</option>
+                <option>Account #3 — Siti Rahayu (Bronze)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Amount (Rp)</label>
+              <input type="number" placeholder="e.g. 5000000" />
+            </div>
+            <div class="field">
+              <label>Deposit date</label>
+              <input type="date" />
+            </div>
+            <div class="form-footer" style="justify-content:stretch">
+              <button class="btn btn-primary" style="width:100%;justify-content:center">
+                Confirm deposit
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Withdraw screen -->
+        <div class="screen" id="s-withdraw">
+          <div class="form-card" style="margin-top:0;max-width:440px">
+            <h3>Withdraw from account</h3>
+            <div class="field">
+              <label>Account</label>
+              <select>
+                <option>Account #1 — Budi Santoso (Silver, Rp 5,000,000)</option>
+                <option>Account #2 — Budi Santoso (Gold, Rp 12,000,000)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Withdrawal date</label>
+              <input type="date" />
+            </div>
+            <div class="form-footer" style="justify-content:stretch">
+              <button class="btn btn-primary" style="width:100%;justify-content:center"
+                onclick="document.getElementById('withdraw-result').style.display='block'">
+                Calculate &amp; withdraw
+              </button>
+            </div>
+
+            <div class="result-card" id="withdraw-result" style="display:none">
+              <div class="result-row">
+                <span>Starting balance</span><span>Rp 5,000,000</span>
+              </div>
+              <div class="result-row">
+                <span>Months held</span><span>6</span>
+              </div>
+              <div class="result-row">
+                <span>Monthly return</span><span>0.42%</span>
+              </div>
+              <div class="result-row">
+                <span>Interest earned</span><span>Rp 125,000</span>
+              </div>
+              <div class="result-row">
+                <span>Ending balance</span><span>Rp 5,125,000</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions screen -->
+        <div class="screen" id="s-transactions">
+          <div class="filter-row">
+            <select>
+              <option>All accounts</option>
+              <option>Account #1 — Budi Santoso</option>
+              <option>Account #2 — Budi Santoso</option>
+              <option>Account #3 — Siti Rahayu</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Account</th>
+                  <th>Type</th>
+                  <th>Amount (Rp)</th>
+                  <th>Ending balance</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>#1</td>
+                  <td><span class="badge badge-deposit">Deposit</span></td>
+                  <td>5,000,000</td>
+                  <td>—</td>
+                  <td>2024-01-15</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>#2</td>
+                  <td><span class="badge badge-deposit">Deposit</span></td>
+                  <td>12,000,000</td>
+                  <td>—</td>
+                  <td>2024-02-01</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>#1</td>
+                  <td><span class="badge badge-withdraw">Withdrawal</span></td>
+                  <td>5,000,000</td>
+                  <td>5,125,000</td>
+                  <td>2024-07-15</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      customers: 'Customers',
+      deposito: 'Deposito types',
+      accounts: 'Accounts',
+      deposit: 'Deposit',
+      withdraw: 'Withdraw',
+      transactions: 'Transactions'
+    };
+    const actions = {
+      customers: 'Add customer',
+      deposito: 'Add deposito type',
+      accounts: 'Open account',
+      deposit: null,
+      withdraw: null,
+      transactions: null
+    };
+
+    function nav(id, el) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('s-' + id).classList.add('active');
+      el.classList.add('active');
+      document.getElementById('page-title').textContent = titles[id];
+      const lbl = actions[id];
+      const btn = document.getElementById('top-action');
+      if (lbl) {
+        btn.style.display = 'inline-flex';
+        document.getElementById('top-action-label').textContent = lbl;
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    function topAction() {
+      const active = document.querySelector('.nav-item.active');
+      const id = active.getAttribute('onclick').match(/'(\w+)'/)[1];
+      const form = document.getElementById('form-' + id);
+      if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    function hideForm(id) {
+      const form = document.getElementById('form-' + id);
+      if (form) form.style.display = 'none';
+    }
+  </script>
+
+</body>
+
+</html>
