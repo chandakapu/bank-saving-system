@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import { customerApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { Modal, ConfirmDialog, EmptyState, formatDate } from './UI';
+import { Modal, ConfirmDialog, EmptyState } from './UI';
+import { formatDate } from '../utils';
 
-export default function Customers({ showToast, triggerAdd }) {
+const Customers = forwardRef(({ showToast }, ref) => {
   const { data: customers, loading, reload } = useApi(() => customerApi.getAll());
   const [modal, setModal] = useState({ show: false, mode: 'add', customer: null });
   const [confirm, setConfirm] = useState({ show: false, id: null, name: '' });
@@ -15,7 +16,9 @@ export default function Customers({ showToast, triggerAdd }) {
   const openEdit = (c) => { setFormName(c.name); setModal({ show: true, mode: 'edit', customer: c }); };
   const closeModal = () => setModal({ show: false, mode: 'add', customer: null });
 
-  useEffect(() => { if (triggerAdd) openAdd(); }, [triggerAdd]);
+  useImperativeHandle(ref, () => ({
+    openAdd: () => openAdd()
+  }));
 
   const handleSave = async () => {
     if (!formName.trim()) { showToast('Name is required', 'error'); return; }
@@ -120,7 +123,9 @@ export default function Customers({ showToast, triggerAdd }) {
       />
     </>
   );
-}
+});
 
 // Expose action config for the topbar button
 Customers.topAction = { label: 'Add customer', key: 'add-customer' };
+
+export default Customers;

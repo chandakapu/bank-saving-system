@@ -31,11 +31,10 @@ export default function App() {
   };
 
   const renderScreen = () => {
-    const props = { showToast, actionRef };
     switch (active) {
-      case 'customers':    return <CustomersWrapper {...props} />;
-      case 'deposito':     return <DepositoWrapper {...props} />;
-      case 'accounts':     return <AccountsWrapper {...props} />;
+      case 'customers':    return <Customers showToast={showToast} ref={actionRef} />;
+      case 'deposito':     return <DepositoTypes showToast={showToast} ref={actionRef} />;
+      case 'accounts':     return <Accounts showToast={showToast} ref={actionRef} />;
       case 'deposit':      return <Deposit showToast={showToast} />;
       case 'withdraw':     return <Withdraw showToast={showToast} />;
       case 'transactions': return <Transactions />;
@@ -101,35 +100,4 @@ export default function App() {
       <Toast toast={toast} />
     </div>
   );
-}
-
-// Wrapper components to wire up the topbar action button
-function CustomersWrapper({ showToast, actionRef }) {
-  const [triggerAdd, setTriggerAdd] = useState(0);
-  actionRef.current = () => setTriggerAdd((n) => n + 1);
-  return <CustomersWithTrigger showToast={showToast} triggerAdd={triggerAdd} />;
-}
-
-function CustomersWithTrigger({ showToast, triggerAdd }) {
-  return <Customers showToast={showToast} triggerAdd={triggerAdd} />;
-}
-
-function DepositoWrapper({ showToast, actionRef }) {
-  const [triggerAdd, setTriggerAdd] = useState(0);
-  actionRef.current = () => setTriggerAdd((n) => n + 1);
-  return <DepositoWithTrigger showToast={showToast} triggerAdd={triggerAdd} />;
-}
-
-function DepositoWithTrigger({ showToast, triggerAdd }) {
-  return <DepositoTypes showToast={showToast} triggerAdd={triggerAdd} />;
-}
-
-function AccountsWrapper({ showToast, actionRef }) {
-  const [triggerAdd, setTriggerAdd] = useState(0);
-  actionRef.current = () => setTriggerAdd((n) => n + 1);
-  return <AccountsWithTrigger showToast={showToast} triggerAdd={triggerAdd} />;
-}
-
-function AccountsWithTrigger({ showToast, triggerAdd }) {
-  return <Accounts showToast={showToast} triggerAdd={triggerAdd} />;
 }

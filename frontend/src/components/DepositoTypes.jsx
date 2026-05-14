@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import { depositoApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { Modal, ConfirmDialog, EmptyState, Badge, getDepositoBadgeType } from './UI';
+import { Modal, ConfirmDialog, EmptyState, Badge } from './UI';
+import { getDepositoBadgeType } from '../utils';
 
-export default function DepositoTypes({ showToast, triggerAdd }) {
+const DepositoTypes = forwardRef(({ showToast }, ref) => {
   const { data: types, loading, reload } = useApi(() => depositoApi.getAll());
   const [modal, setModal] = useState({ show: false, mode: 'add', item: null });
   const [confirm, setConfirm] = useState({ show: false, id: null, name: '' });
@@ -23,7 +24,9 @@ export default function DepositoTypes({ showToast, triggerAdd }) {
   };
   const closeModal = () => setModal({ show: false, mode: 'add', item: null });
 
-  useEffect(() => { if (triggerAdd) openAdd(); }, [triggerAdd]);
+  useImperativeHandle(ref, () => ({
+    openAdd: () => openAdd()
+  }));
 
   const handleSave = async () => {
     if (!formName.trim()) { showToast('Name is required', 'error'); return; }
@@ -140,6 +143,8 @@ export default function DepositoTypes({ showToast, triggerAdd }) {
       />
     </>
   );
-}
+});
 
 DepositoTypes.topAction = { label: 'Add deposito type', key: 'add-deposito' };
+
+export default DepositoTypes;

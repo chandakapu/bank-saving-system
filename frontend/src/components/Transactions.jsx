@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { accountApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { EmptyState, Badge, formatMoney, formatDate } from './UI';
+import { EmptyState, Badge } from './UI';
+import { formatMoney, formatDate } from '../utils';
 
 export default function Transactions() {
   const { data: accounts } = useApi(() => accountApi.getAll());
@@ -10,6 +11,38 @@ export default function Transactions() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const loadAllTransactions = async () => {
+      setLoading(true);
+      try {
+        const allTx = [];
+        for (const a of accounts) {
+          const txList = await accountApi.getTransactions(a.id);
+          txList.forEach((tx) => { tx._accountId = a.id; tx._account = a; });
+          allTx.push(...txList);
+        }
+        allTx.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setTransactions(allTx);
+      } catch {
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadTransactions = async (accId) => {
+      setLoading(true);
+      try {
+        const txList = await accountApi.getTransactions(accId);
+        const acc = accounts?.find((a) => a.id === parseInt(accId));
+        txList.forEach((tx) => { tx._accountId = accId; tx._account = acc; });
+        setTransactions(txList);
+      } catch {
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (!selectedAccount || !accounts) {
       // Load all transactions from all accounts
       if (accounts && accounts.length > 0) {
@@ -19,38 +52,6 @@ export default function Transactions() {
     }
     loadTransactions(selectedAccount);
   }, [selectedAccount, accounts]);
-
-  const loadAllTransactions = async () => {
-    setLoading(true);
-    try {
-      const allTx = [];
-      for (const a of accounts) {
-        const txList = await accountApi.getTransactions(a.id);
-        txList.forEach((tx) => { tx._accountId = a.id; tx._account = a; });
-        allTx.push(...txList);
-      }
-      allTx.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      setTransactions(allTx);
-    } catch {
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTransactions = async (accId) => {
-    setLoading(true);
-    try {
-      const txList = await accountApi.getTransactions(accId);
-      const acc = accounts?.find((a) => a.id === parseInt(accId));
-      txList.forEach((tx) => { tx._accountId = accId; tx._account = acc; });
-      setTransactions(txList);
-    } catch {
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) return <div className="empty-state"><p>Loading transactions...</p></div>;
 

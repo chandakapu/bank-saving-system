@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import { accountApi, customerApi, depositoApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { Modal, ConfirmDialog, EmptyState, Badge, formatMoney, getDepositoBadgeType } from './UI';
+import { Modal, ConfirmDialog, EmptyState, Badge } from './UI';
+import { formatMoney, getDepositoBadgeType } from '../utils';
 
-export default function Accounts({ showToast, triggerAdd }) {
+const Accounts = forwardRef(({ showToast }, ref) => {
   const { data: accounts, loading, reload } = useApi(() => accountApi.getAll());
   const { data: customers } = useApi(() => customerApi.getAll());
   const { data: depositoTypes } = useApi(() => depositoApi.getAll());
@@ -25,7 +26,9 @@ export default function Accounts({ showToast, triggerAdd }) {
   };
   const closeModal = () => setModal({ show: false, mode: 'add', item: null });
 
-  useEffect(() => { if (triggerAdd) openAdd(); }, [triggerAdd]);
+  useImperativeHandle(ref, () => ({
+    openAdd: () => openAdd()
+  }));
 
   const handleSave = async () => {
     setSaving(true);
@@ -146,6 +149,8 @@ export default function Accounts({ showToast, triggerAdd }) {
       />
     </>
   );
-}
+});
 
 Accounts.topAction = { label: 'Open account', key: 'open-account' };
+
+export default Accounts;
