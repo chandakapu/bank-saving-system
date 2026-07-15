@@ -2,17 +2,68 @@
   "info": {
     "name": "Bank Saving System",
     "_postman_id": "bank-saving-system-v1",
-    "description": "API collection for the Bank Saving System by Belimbing.ai engineering test.",
+    "description": "Authenticated API collection for the Bank Saving System. Run Login first; Postman retains the session cookie.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000/api/v1",
+      "value": "http://localhost/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "origin",
+      "value": "http://localhost",
+      "type": "string"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotency_key",
+      "value": "replace-for-each-logical-operation",
       "type": "string"
     }
   ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": ["pm.request.headers.upsert({ key: 'Origin', value: pm.collectionVariables.get('origin') });"]
+      }
+    }
+  ],
   "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}" }
+          }
+        },
+        {
+          "name": "Current session",
+          "request": { "method": "GET", "url": "{{base_url}}/auth/session" }
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "POST", "url": "{{base_url}}/auth/logout" }
+        }
+      ]
+    },
     {
       "name": "Customers",
       "item": [
@@ -185,7 +236,7 @@
           "request": {
             "method": "POST",
             "url": "{{base_url}}/accounts/1/deposit",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"amount\": 5000000,\n  \"transaction_date\": \"2024-01-15\"\n}"
@@ -197,7 +248,7 @@
           "request": {
             "method": "POST",
             "url": "{{base_url}}/accounts/1/withdraw",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"transaction_date\": \"2024-07-15\"\n}"

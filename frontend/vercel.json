@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://bank-saving-api.onrender.com/api/:path*"
+    }
+  ]
+}

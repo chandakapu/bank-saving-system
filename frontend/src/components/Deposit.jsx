@@ -1,39 +1,52 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { accountApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { formatMoney } from '../utils';
+import { createIdempotencyKey, formatMoney, getLocalDateValue, getPageData } from '../utils';
+import { ErrorState } from './UI';
 
 export default function Deposit({ showToast }) {
-  const { data: accounts, reload: reloadAccounts } = useApi(() => accountApi.getAll());
+  const { data: response, loading, error, reload: reloadAccounts } = useApi(() => accountApi.getAll());
+  const accounts = getPageData(response);
   const [accountId, setAccountId] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(getLocalDateValue);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
+  const submittingRef = useRef(false);
+  const idempotencyKeyRef = useRef(null);
+  const validAccountId = accounts.some((account) => String(account.id) === String(accountId)) ? accountId : '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!accountId) { showToast('Please select an account', 'error'); return; }
+    if (submittingRef.current) return;
+    if (!validAccountId) { showToast('Please select an account', 'error'); return; }
     if (!amount || parseFloat(amount) <= 0) { showToast('Amount must be greater than 0', 'error'); return; }
     if (!date) { showToast('Date is required', 'error'); return; }
 
+    submittingRef.current = true;
     setSubmitting(true);
     setResult(null);
     try {
-      const res = await accountApi.deposit(accountId, {
-        amount: parseFloat(amount),
+      idempotencyKeyRef.current ||= createIdempotencyKey();
+      const res = await accountApi.deposit(validAccountId, {
+        amount,
         transaction_date: date,
-      });
+      }, idempotencyKeyRef.current);
       setResult(res);
       showToast('Deposit successful!');
       setAmount('');
+      idempotencyKeyRef.current = null;
       reloadAccounts();
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
+
+  if (loading) return <div className="empty-state"><p>Loading accounts...</p></div>;
+  if (error) return <ErrorState message={error.message} onRetry={reloadAccounts} />;
 
   return (
     <div>
@@ -41,9 +54,9 @@ export default function Deposit({ showToast }) {
         <h3><i className="ti ti-arrow-down-circle"></i> Deposit to Account</h3>
         <div className="field">
           <label htmlFor="deposit-account">Account</label>
-          <select id="deposit-account" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+          <select id="deposit-account" value={validAccountId} onChange={(e) => { setAccountId(e.target.value); setResult(null); idempotencyKeyRef.current = null; }}>
             <option value="">Select account...</option>
-            {accounts?.map((a) => (
+            {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 #{a.id} — {a.customer?.name} ({a.deposito_type?.name?.replace('Deposito ', '')}, Rp {formatMoney(a.balance)})
               </option>
@@ -56,14 +69,15 @@ export default function Deposit({ showToast }) {
             id="deposit-amount"
             type="number"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => { setAmount(e.target.value); idempotencyKeyRef.current = null; }}
             placeholder="e.g. 5000000"
-            min="1"
+            min="0.01"
+            step="0.01"
           />
         </div>
         <div className="field">
           <label htmlFor="deposit-date">Deposit Date</label>
-          <input id="deposit-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="deposit-date" type="date" max={getLocalDateValue()} value={date} onChange={(e) => { setDate(e.target.value); idempotencyKeyRef.current = null; }} />
         </div>
         <div className="form-footer">
           <button type="submit" className={`btn btn-primary btn-full ${submitting ? 'loading' : ''}`} disabled={submitting}>

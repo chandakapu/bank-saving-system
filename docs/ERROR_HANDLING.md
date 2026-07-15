@@ -6,6 +6,8 @@ Every error returns a consistent JSON body:
 { "error": "Human-readable message here" }
 ```
 
+Authentication failures return `401`, rejected browser origins return `403`, and database-backed login throttling returns `429` with `Retry-After`.
+
 ---
 
 ## Validation errors (400)
@@ -23,6 +25,7 @@ Every error returns a consistent JSON body:
 | `POST /accounts/:id/deposit` | `amount` ≤ 0 | `"Amount must be greater than 0"` |
 | `POST /accounts/:id/deposit` | `transaction_date` missing | `"transaction_date is required"` |
 | `POST /accounts/:id/deposit` | `transaction_date` in the future | `"transaction_date cannot be in the future"` |
+| Financial operation | `Idempotency-Key` missing or malformed | `"Idempotency-Key is required and must be 1-128 safe characters"` |
 | `POST /accounts/:id/withdraw` | `transaction_date` missing | `"transaction_date is required"` |
 | `POST /accounts/:id/withdraw` | `transaction_date` before last deposit date | `"withdrawal_date must be after the deposit date"` |
 | `POST /accounts/:id/withdraw` | account balance is 0 | `"Account balance is 0, nothing to withdraw"` |
@@ -49,6 +52,9 @@ Every error returns a consistent JSON body:
 | `DELETE /customers/:id` — customer has accounts | `"Cannot delete customer with existing accounts. Close all accounts first."` |
 | `DELETE /deposito-types/:id` — type is used by accounts | `"Cannot delete deposito type that is assigned to existing accounts."` |
 | `DELETE /accounts/:id` — account has transactions | `"Cannot delete account with existing transactions."` |
+| Financial operation | date is older than latest ledger entry | `"transaction_date cannot be older than the latest account transaction"` |
+| `PUT /accounts/:id` | balance is nonzero | `"Account type cannot change while balance is nonzero"` |
+| Financial operation | idempotency key reused with different input | `"Idempotency-Key was already used with a different request"` |
 
 ---
 
@@ -60,6 +66,7 @@ Every error returns a consistent JSON body:
 | Deposit date and withdrawal date are the same day | `months = 0`, interest = 0, `ending_balance = starting_balance` |
 | Multiple deposits on the same account | Use the **most recent deposit date** as the start date for interest calculation |
 | Withdrawal date is less than 1 month after deposit | `months = 0` (integer months only), no interest earned |
+| Rate changes after account opening | Existing account uses its snapshotted rate |
 | `yearly_return` stored as decimal but sent as percentage by mistake | Validate on input: reject values > 1. Document clearly in API spec. |
 
 ### Cascade delete protection

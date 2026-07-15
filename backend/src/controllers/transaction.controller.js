@@ -1,18 +1,22 @@
 const Transaction = require('../models/transaction.model');
 const Account = require('../models/account.model');
+const validation = require('../lib/validation');
+const HttpError = require('../lib/httpError');
 
 /**
  * GET /accounts/:id/transactions
  */
 exports.getByAccountId = async (req, res, next) => {
   try {
-    const account = await Account.findRawById(req.params.id);
+    const accountId = validation.positiveInteger(req.params.id, 'account id');
+    const account = await Account.findRawById(accountId);
     if (!account) {
-      return res.status(404).json({ error: 'Account not found' });
+      throw new HttpError(404, 'Account not found');
     }
 
-    const transactions = await Transaction.findByAccountId(req.params.id);
-    res.json(transactions);
+    const paging = validation.pagination(req.query);
+    const { rows, total } = await Transaction.findByAccountId(accountId, paging);
+    res.json(validation.paginated(rows, total, paging.page, paging.limit));
   } catch (err) {
     next(err);
   }

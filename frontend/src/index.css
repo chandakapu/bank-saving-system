@@ -170,6 +170,8 @@ body {
   background: var(--success);
   animation: pulse 2s ease-in-out infinite;
 }
+.status-dot.checking { background: var(--warning); }
+.status-dot.disconnected { background: var(--danger); animation: none; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -197,6 +199,7 @@ body {
 
 .topbar-left { display: flex; align-items: center; gap: 10px; }
 .topbar-title { font-size: 16px; font-weight: 600; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
 
 .content {
   flex: 1;
@@ -256,11 +259,12 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--shadow-sm);
 }
 
 table { width: 100%; border-collapse: collapse; }
+.table-wrap table { min-width: 640px; }
 
 thead th {
   padding: 11px 16px;
@@ -420,6 +424,34 @@ tbody td { padding: 11px 16px; font-size: 13px; }
 .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; opacity: .4; }
 .empty-state p { font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
 .empty-state span { font-size: 13px; }
+.error-state i, .error-state p { color: var(--danger); }
+.error-state .btn { display: flex; margin: 16px auto 0; }
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+}
+.loading-note { margin-bottom: 12px; color: var(--text-muted); font-size: 13px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* --- Modal --- */
 .modal-overlay {
@@ -500,6 +532,28 @@ tbody td { padding: 11px 16px; font-size: 13px; }
 .toast.error { background: var(--danger); }
 .toast.success { background: var(--success); }
 
+/* --- Authentication --- */
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg-page);
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.login-logo { display: block; width: 170px; margin: 0 auto 24px; mix-blend-mode: multiply; }
+.login-card h1 { font-size: 20px; margin-bottom: 6px; }
+.login-card > p { color: var(--text-secondary); margin-bottom: 24px; }
+.form-error { padding: 10px 12px; margin-bottom: 16px; border-radius: var(--radius-sm); color: var(--danger); background: var(--danger-bg); font-size: 13px; }
+
 /* --- Animations --- */
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(8px); }
@@ -533,4 +587,6 @@ tbody td { padding: 11px 16px; font-size: 13px; }
   .sidebar-footer { justify-content: center; }
   .content { padding: 16px; }
   .form-card { max-width: 100%; }
+  .topbar { padding: 12px 16px; }
+  .logout-btn { padding-inline: 10px; }
 }

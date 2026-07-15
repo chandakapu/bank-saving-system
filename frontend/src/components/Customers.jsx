@@ -1,16 +1,19 @@
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle, useRef } from 'react';
 import { customerApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { Modal, ConfirmDialog, EmptyState } from './UI';
-import { formatDate } from '../utils';
+import { Modal, ConfirmDialog, EmptyState, ErrorState } from './UI';
+import { formatDate, getPageData } from '../utils';
 
 const Customers = forwardRef(({ showToast }, ref) => {
-  const { data: customers, loading, reload } = useApi(() => customerApi.getAll());
+  const { data: response, loading, error, reload } = useApi(() => customerApi.getAll());
+  const customers = getPageData(response);
   const [modal, setModal] = useState({ show: false, mode: 'add', customer: null });
   const [confirm, setConfirm] = useState({ show: false, id: null, name: '' });
   const [formName, setFormName] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const savingRef = useRef(false);
+  const deletingRef = useRef(false);
 
   const openAdd = () => { setFormName(''); setModal({ show: true, mode: 'add', customer: null }); };
   const openEdit = (c) => { setFormName(c.name); setModal({ show: true, mode: 'edit', customer: c }); };
@@ -21,7 +24,9 @@ const Customers = forwardRef(({ showToast }, ref) => {
   }));
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!formName.trim()) { showToast('Name is required', 'error'); return; }
+    savingRef.current = true;
     setSaving(true);
     try {
       if (modal.mode === 'add') {
@@ -36,11 +41,14 @@ const Customers = forwardRef(({ showToast }, ref) => {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setDeleting(true);
     try {
       await customerApi.delete(confirm.id);
@@ -50,22 +58,24 @@ const Customers = forwardRef(({ showToast }, ref) => {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
+      deletingRef.current = false;
       setDeleting(false);
     }
   };
 
   if (loading) return <div className="empty-state"><p>Loading...</p></div>;
+  if (error) return <ErrorState message={error.message} onRetry={reload} />;
 
   return (
     <>
-      {customers?.length === 0 ? (
+      {customers.length === 0 ? (
         <EmptyState icon="users-plus" title="No customers yet" subtitle="Add your first customer to get started" />
       ) : (
         <div className="table-wrap">
           <table>
             <thead><tr><th>ID</th><th>Name</th><th>Created</th><th></th></tr></thead>
             <tbody>
-              {customers?.map((c) => (
+              {customers.map((c) => (
                 <tr key={c.id}>
                   <td>{c.id}</td>
                   <td>{c.name}</td>
@@ -101,14 +111,14 @@ const Customers = forwardRef(({ showToast }, ref) => {
         }
       >
         <div className="field">
-          <label>Full name</label>
+          <label htmlFor="customer-name">Full name</label>
           <input
+            id="customer-name"
             type="text"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             placeholder="e.g. Budi Santoso"
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave(); } }}
           />
         </div>
       </Modal>

@@ -1,23 +1,28 @@
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle, useRef } from 'react';
 import { accountApi, customerApi, depositoApi } from '../services/api';
 import { useApi } from '../hooks/useApi';
-import { Modal, ConfirmDialog, EmptyState, Badge } from './UI';
-import { formatMoney, getDepositoBadgeType } from '../utils';
+import { Modal, ConfirmDialog, EmptyState, Badge, ErrorState } from './UI';
+import { formatMoney, getDepositoBadgeType, getPageData } from '../utils';
 
 const Accounts = forwardRef(({ showToast }, ref) => {
-  const { data: accounts, loading, reload } = useApi(() => accountApi.getAll());
-  const { data: customers } = useApi(() => customerApi.getAll());
-  const { data: depositoTypes } = useApi(() => depositoApi.getAll());
+  const { data: accountResponse, loading, error, reload } = useApi(() => accountApi.getAll());
+  const { data: customerResponse, error: customerError, reload: reloadCustomers } = useApi(() => customerApi.getAll());
+  const { data: depositoResponse, error: depositoError, reload: reloadDepositos } = useApi(() => depositoApi.getAll());
+  const accounts = getPageData(accountResponse);
+  const customers = getPageData(customerResponse);
+  const depositoTypes = getPageData(depositoResponse);
   const [modal, setModal] = useState({ show: false, mode: 'add', item: null });
   const [confirm, setConfirm] = useState({ show: false, id: null });
   const [formCustomer, setFormCustomer] = useState('');
   const [formDeposito, setFormDeposito] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const savingRef = useRef(false);
+  const deletingRef = useRef(false);
 
   const openAdd = () => {
-    setFormCustomer(customers?.[0]?.id || '');
-    setFormDeposito(depositoTypes?.[0]?.id || '');
+    setFormCustomer(customers[0]?.id || '');
+    setFormDeposito(depositoTypes[0]?.id || '');
     setModal({ show: true, mode: 'add', item: null });
   };
   const openEdit = (item) => {
@@ -31,10 +36,12 @@ const Accounts = forwardRef(({ showToast }, ref) => {
   }));
 
   const handleSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       if (modal.mode === 'add') {
-        if (!formCustomer || !formDeposito) { showToast('Please select customer and deposito type', 'error'); setSaving(false); return; }
+        if (!formCustomer || !formDeposito) { showToast('Please select customer and deposito type', 'error'); return; }
         await accountApi.create({ customer_id: parseInt(formCustomer), deposito_type_id: parseInt(formDeposito) });
         showToast('Account opened');
       } else {
@@ -46,11 +53,14 @@ const Accounts = forwardRef(({ showToast }, ref) => {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setDeleting(true);
     try {
       await accountApi.delete(confirm.id);
@@ -60,15 +70,18 @@ const Accounts = forwardRef(({ showToast }, ref) => {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
+      deletingRef.current = false;
       setDeleting(false);
     }
   };
 
   if (loading) return <div className="empty-state"><p>Loading...</p></div>;
+  if (error) return <ErrorState message={error.message} onRetry={reload} />;
+  if (customerError || depositoError) return <ErrorState title="Unable to load account options" message={(customerError || depositoError).message} onRetry={() => { reloadCustomers(); reloadDepositos(); }} />;
 
   return (
     <>
-      {accounts?.length === 0 ? (
+      {accounts.length === 0 ? (
         <EmptyState icon="wallet-off" title="No accounts yet" subtitle="Open an account for a customer" />
       ) : (
         <div className="table-wrap">
@@ -77,7 +90,7 @@ const Accounts = forwardRef(({ showToast }, ref) => {
               <tr><th>ID</th><th>Customer</th><th>Deposito Type</th><th>Balance (Rp)</th><th></th></tr>
             </thead>
             <tbody>
-              {accounts?.map((a) => (
+              {accounts.map((a) => (
                 <tr key={a.id}>
                   <td>{a.id}</td>
                   <td>{a.customer?.name}</td>
@@ -119,18 +132,18 @@ const Accounts = forwardRef(({ showToast }, ref) => {
       >
         {modal.mode === 'add' && (
           <div className="field">
-            <label>Customer</label>
-            <select value={formCustomer} onChange={(e) => setFormCustomer(e.target.value)}>
+            <label htmlFor="account-customer">Customer</label>
+            <select id="account-customer" value={formCustomer} onChange={(e) => setFormCustomer(e.target.value)}>
               <option value="">Select customer...</option>
-              {customers?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         )}
         <div className="field">
-          <label>Deposito Type</label>
-          <select value={formDeposito} onChange={(e) => setFormDeposito(e.target.value)}>
+          <label htmlFor="account-deposito">Deposito Type</label>
+          <select id="account-deposito" value={formDeposito} onChange={(e) => setFormDeposito(e.target.value)}>
             <option value="">Select type...</option>
-            {depositoTypes?.map((d) => (
+            {depositoTypes.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name} ({(parseFloat(d.yearly_return) * 100).toFixed(0)}%)
               </option>

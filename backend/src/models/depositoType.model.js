@@ -4,11 +4,13 @@ class DepositoType {
   /**
    * Get all deposito types.
    */
-  static async findAll() {
+  static async findAll({ limit, offset }) {
     const [rows] = await pool.query(
-      'SELECT id, name, yearly_return, created_at, updated_at FROM deposito_types ORDER BY id ASC'
+      'SELECT id, name, yearly_return, created_at, updated_at FROM deposito_types ORDER BY id ASC LIMIT ? OFFSET ?',
+      [limit, offset]
     );
-    return rows;
+    const [counts] = await pool.query('SELECT COUNT(*) AS total FROM deposito_types');
+    return { rows, total: counts[0].total };
   }
 
   /**

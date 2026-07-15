@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,11 +16,13 @@ jobs:
         with:
           node-version: '22'
       
-      - name: Lint Frontend
+      - name: Check Frontend
         run: |
           cd frontend
-          npm install
+          npm ci
           npm run lint
+          npm test
+          npm run build
 
   test-backend:
     runs-on: ubuntu-latest
@@ -45,13 +47,23 @@ jobs:
         run: |
           mysql -h 127.0.0.1 -u root -proot bank_saving_system < database/migrations/migrations.sql
 
-      - name: Run Backend API Tests
+      - name: Run Backend Tests
         run: |
           cd backend
-          npm install
-          # Start server in background
-          DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASSWORD=root DB_NAME=bank_saving_system PORT=3000 npm run start &
-          # Wait for server to be ready
-          sleep 5
-          # Run bash test script
-          bash test-api.sh
+          npm ci
+          TEST_DATABASE=1 \
+          TEST_DB_HOST=127.0.0.1 \
+          TEST_DB_PORT=3306 \
+          TEST_DB_USER=root \
+          TEST_DB_PASSWORD=root \
+          TEST_DB_NAME=bank_saving_system \
+          npm test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production images
+        run: |
+          docker build -t bank-saving-backend ./backend
+          docker build -t bank-saving-frontend ./frontend

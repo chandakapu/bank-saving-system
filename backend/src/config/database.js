@@ -1,4 +1,15 @@
 const mysql = require('mysql2/promise');
+const fs = require('fs');
+
+const ssl = process.env.DB_SSL === 'true' ? {
+  rejectUnauthorized: true,
+  ...(process.env.DB_SSL_CA ? { ca: fs.readFileSync(process.env.DB_SSL_CA, 'utf8') } : {}),
+} : undefined;
+
+function boundedInteger(value, fallback, max) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
+}
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -6,12 +17,14 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // Add this SSL configuration:
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  ssl,
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+  connectionLimit: boundedInteger(process.env.DB_CONNECTION_LIMIT, 10, 100),
+  queueLimit: boundedInteger(process.env.DB_QUEUE_LIMIT, 100, 1000),
+  connectTimeout: boundedInteger(process.env.DB_CONNECT_TIMEOUT_MS, 10000, 60000),
   decimalNumbers: false,
+  dateStrings: true,
+  timezone: 'Z',
 });
 
 /**
@@ -20,7 +33,7 @@ const pool = mysql.createPool({
  */
 async function testConnection() {
   const connection = await pool.getConnection();
-  console.log('✅ MySQL connected — database:', process.env.DB_NAME);
+  console.log('MySQL connected, database:', process.env.DB_NAME);
   connection.release();
 }
 

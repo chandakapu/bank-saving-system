@@ -2,7 +2,7 @@
 
 ## Overview
 
-The system uses 4 tables. The dependency order is:
+The business domain uses four tables. Authentication, sessions, login throttling, idempotency, and migration tracking use supporting tables.
 
 ```
 customers ──< accounts >── deposito_types
@@ -56,6 +56,7 @@ A savings account owned by a customer, with a chosen deposito type.
 | `id` | INT UNSIGNED PK | Auto-increment |
 | `customer_id` | INT UNSIGNED FK | → `customers.id` |
 | `deposito_type_id` | INT UNSIGNED FK | → `deposito_types.id` |
+| `yearly_return` | DECIMAL(5,4) | Rate snapshotted for this account's current product cycle |
 | `balance` | DECIMAL(15,2) | Current balance in the account |
 | `created_at` | TIMESTAMP | Auto-set on insert |
 | `updated_at` | TIMESTAMP | Auto-set on update |
@@ -75,6 +76,10 @@ An immutable log of every deposit and withdrawal. Never delete or update rows he
 | `account_id` | INT UNSIGNED FK | → `accounts.id` |
 | `type` | ENUM | `'deposit'` or `'withdrawal'` |
 | `amount` | DECIMAL(15,2) | The money moved |
+| `starting_balance` | DECIMAL(15,2) | Withdrawal audit value |
+| `interest_earned` | DECIMAL(15,2) | Withdrawal audit value |
+| `months_held` | INT UNSIGNED | Completed months applied to withdrawal |
+| `yearly_return` | DECIMAL(5,4) | Snapshotted rate applied to withdrawal |
 | `ending_balance` | DECIMAL(15,2) | NULL for deposits; calculated on withdrawal |
 | `transaction_date` | DATE | User-supplied date |
 | `created_at` | TIMESTAMP | When the record was created |
@@ -103,6 +108,16 @@ ending_balance  = Rp 10,250,000
 ```
 
 The `ending_balance` is stored in the transaction row for display and audit purposes. The `accounts.balance` is then updated to `0` (or the remaining amount if partial withdrawal is supported).
+
+The ledger insert and balance update run in one database transaction while the account row is locked. Financial requests are keyed in `idempotency_keys`, so an ambiguous client retry cannot apply money twice.
+
+## Supporting Tables
+
+- `admins`: bcrypt password hashes for administrative identities.
+- `admin_sessions`: hashes of opaque, expiring session tokens.
+- `login_attempts`: shared login throttling across backend replicas.
+- `idempotency_keys`: request hashes and committed financial responses.
+- `schema_migrations`: completed additive migration versions.
 
 ---
 

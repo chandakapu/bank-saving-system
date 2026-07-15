@@ -1,259 +1,179 @@
+const crypto = require('crypto');
+const { pool } = require('../config/database');
 const Account = require('../models/account.model');
-const Customer = require('../models/customer.model');
-const DepositoType = require('../models/depositoType.model');
-const Transaction = require('../models/transaction.model');
+const HttpError = require('../lib/httpError');
+const validation = require('../lib/validation');
 
-/**
- * GET /accounts
- */
+function id(req) {
+  return validation.positiveInteger(req.params.id, 'account id');
+}
+
+function keyAndHash(req, operation, accountId, body) {
+  const key = req.get('Idempotency-Key');
+  if (!key || !/^[A-Za-z0-9._:-]{1,128}$/.test(key)) {
+    throw new HttpError(400, 'Idempotency-Key is required and must be 1-128 safe characters');
+  }
+  return { key, hash: crypto.createHash('sha256').update(JSON.stringify({ operation, accountId, ...body })).digest() };
+}
+
+async function replay(operation, key, hash) {
+  const [rows] = await pool.query(
+    'SELECT request_hash, response_status, response_body FROM idempotency_keys WHERE operation = ? AND idempotency_key = ?',
+    [operation, key]
+  );
+  if (!rows[0] || !crypto.timingSafeEqual(rows[0].request_hash, hash)) {
+    throw new HttpError(409, 'Idempotency-Key was already used with a different request');
+  }
+  if (rows[0].response_status === null) throw new HttpError(409, 'Idempotent request is still in progress');
+  const body = typeof rows[0].response_body === 'string' ? JSON.parse(rows[0].response_body) : rows[0].response_body;
+  return { status: rows[0].response_status, body };
+}
+
+async function financialMutation(req, res, next, operation, normalized, execute) {
+  let connection;
+  const accountId = id(req);
+  const { key, hash } = keyAndHash(req, operation, accountId, normalized);
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [existing] = await connection.query('SELECT id FROM accounts WHERE id = ? FOR UPDATE', [accountId]);
+    if (!existing[0]) throw new HttpError(404, 'Account not found');
+    try {
+      await connection.query(
+        'INSERT INTO idempotency_keys (idempotency_key, operation, account_id, request_hash) VALUES (?, ?, ?, ?)',
+        [key, operation, accountId, hash]
+      );
+    } catch (error) {
+      if (error.code !== 'ER_DUP_ENTRY') throw error;
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      const prior = await replay(operation, key, hash);
+      return res.status(prior.status).json(prior.body);
+    }
+    const body = await execute(connection, accountId, normalized);
+    await connection.query(
+      'UPDATE idempotency_keys SET response_status = 201, response_body = ? WHERE operation = ? AND idempotency_key = ?',
+      [JSON.stringify(body), operation, key]
+    );
+    await connection.commit();
+    return res.status(201).json(body);
+  } catch (error) {
+    if (connection) await connection.rollback();
+    next(error);
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 exports.getAll = async (req, res, next) => {
   try {
-    const accounts = await Account.findAll();
-    res.json(accounts);
-  } catch (err) {
-    next(err);
-  }
+    const paging = validation.pagination(req.query);
+    const { rows, total } = await Account.findAll(paging);
+    res.json(validation.paginated(rows, total, paging.page, paging.limit));
+  } catch (error) { next(error); }
 };
 
-/**
- * GET /accounts/:id
- */
 exports.getById = async (req, res, next) => {
   try {
-    const account = await Account.findById(req.params.id);
-    if (!account) {
-      return res.status(404).json({ error: 'Account not found' });
-    }
+    const account = await Account.findById(id(req));
+    if (!account) throw new HttpError(404, 'Account not found');
     res.json(account);
-  } catch (err) {
-    next(err);
-  }
+  } catch (error) { next(error); }
 };
 
-/**
- * POST /accounts
- */
 exports.create = async (req, res, next) => {
   try {
-    const { customer_id, deposito_type_id } = req.body;
-
-    if (!customer_id) {
-      return res.status(400).json({ error: 'customer_id is required' });
-    }
-    if (!deposito_type_id) {
-      return res.status(400).json({ error: 'deposito_type_id is required' });
-    }
-
-    // Verify customer exists
-    const customer = await Customer.findById(customer_id);
-    if (!customer) {
-      return res.status(404).json({ error: 'Customer not found' });
-    }
-
-    // Verify deposito type exists
-    const depositoType = await DepositoType.findById(deposito_type_id);
-    if (!depositoType) {
-      return res.status(404).json({ error: 'Deposito type not found' });
-    }
-
-    const account = await Account.create({ customer_id, deposito_type_id });
-    res.status(201).json(account);
-  } catch (err) {
-    next(err);
-  }
+    const customerId = validation.positiveInteger(req.body.customer_id, 'customer_id');
+    const typeId = validation.positiveInteger(req.body.deposito_type_id, 'deposito_type_id');
+    const [customer] = await pool.query('SELECT id FROM customers WHERE id = ?', [customerId]);
+    if (!customer[0]) throw new HttpError(404, 'Customer not found');
+    const [result] = await pool.query(
+      `INSERT INTO accounts (customer_id, deposito_type_id, yearly_return)
+       SELECT ?, id, yearly_return FROM deposito_types WHERE id = ?`,
+      [customerId, typeId]
+    );
+    if (!result.affectedRows) throw new HttpError(404, 'Deposito type not found');
+    res.status(201).json(await Account.findById(result.insertId));
+  } catch (error) { next(error); }
 };
 
-/**
- * PUT /accounts/:id
- */
 exports.update = async (req, res, next) => {
+  let connection;
   try {
-    const existing = await Account.findRawById(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: 'Account not found' });
-    }
-
-    const { deposito_type_id } = req.body;
-    if (!deposito_type_id) {
-      return res.status(400).json({ error: 'deposito_type_id is required' });
-    }
-
-    // Verify deposito type exists
-    const depositoType = await DepositoType.findById(deposito_type_id);
-    if (!depositoType) {
-      return res.status(404).json({ error: 'Deposito type not found' });
-    }
-
-    const updated = await Account.update(req.params.id, { deposito_type_id });
-    res.json(updated);
-  } catch (err) {
-    next(err);
-  }
+    const accountId = id(req);
+    const typeId = validation.positiveInteger(req.body.deposito_type_id, 'deposito_type_id');
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [accounts] = await connection.query('SELECT balance FROM accounts WHERE id = ? FOR UPDATE', [accountId]);
+    if (!accounts[0]) throw new HttpError(404, 'Account not found');
+    if (accounts[0].balance !== '0.00') throw new HttpError(409, 'Account type cannot change while balance is nonzero');
+    const [types] = await connection.query('SELECT yearly_return FROM deposito_types WHERE id = ?', [typeId]);
+    if (!types[0]) throw new HttpError(404, 'Deposito type not found');
+    await connection.query('UPDATE accounts SET deposito_type_id = ?, yearly_return = ? WHERE id = ?', [typeId, types[0].yearly_return, accountId]);
+    await connection.commit();
+    connection.release();
+    connection = null;
+    res.json(await Account.findById(accountId));
+  } catch (error) {
+    if (connection) await connection.rollback();
+    next(error);
+  } finally { if (connection) connection.release(); }
 };
 
-/**
- * DELETE /accounts/:id
- */
 exports.delete = async (req, res, next) => {
   try {
-    const existing = await Account.findRawById(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: 'Account not found' });
-    }
-
-    // 409 guard: cannot delete if account has transactions
-    const hasTx = await Account.hasTransactions(req.params.id);
-    if (hasTx) {
-      return res.status(409).json({
-        error: 'Cannot delete account with existing transactions.',
-      });
-    }
-
-    await Account.delete(req.params.id);
+    const accountId = id(req);
+    const [result] = await pool.query('DELETE FROM accounts WHERE id = ?', [accountId]);
+    if (!result.affectedRows) throw new HttpError(404, 'Account not found');
     res.json({ message: 'Account deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
+  } catch (error) { next(error); }
 };
 
-/**
- * POST /accounts/:id/deposit
- *
- * Deposits money into an account.
- */
 exports.deposit = async (req, res, next) => {
   try {
-    const account = await Account.findRawById(req.params.id);
-    if (!account) {
-      return res.status(404).json({ error: 'Account not found' });
-    }
-
-    const { amount, transaction_date } = req.body;
-
-    // Validation
-    if (amount === undefined || amount === null) {
-      return res.status(400).json({ error: 'Amount is required' });
-    }
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return res.status(400).json({ error: 'Amount must be greater than 0' });
-    }
-    if (!transaction_date) {
-      return res.status(400).json({ error: 'transaction_date is required' });
-    }
-
-    // Cannot be in the future
-    const txDate = new Date(transaction_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (txDate > today) {
-      return res.status(400).json({ error: 'transaction_date cannot be in the future' });
-    }
-
-    // Create deposit transaction
-    const transactionId = await Transaction.createDeposit({
-      account_id: account.id,
-      amount: numAmount,
-      transaction_date,
+    const normalized = { amount: validation.money(req.body.amount), transaction_date: validation.date(req.body.transaction_date) };
+    return financialMutation(req, res, next, 'deposit', normalized, async (connection, accountId, values) => {
+      const [accounts] = await connection.query('SELECT balance FROM accounts WHERE id = ? FOR UPDATE', [accountId]);
+      if (!accounts[0]) throw new HttpError(404, 'Account not found');
+      const [latest] = await connection.query('SELECT transaction_date FROM transactions WHERE account_id = ? ORDER BY transaction_date DESC, id DESC LIMIT 1', [accountId]);
+      if (latest[0] && values.transaction_date < String(latest[0].transaction_date).slice(0, 10)) throw new HttpError(409, 'transaction_date cannot be older than the latest account transaction');
+      const [insert] = await connection.query("INSERT INTO transactions (account_id, type, amount, transaction_date) VALUES (?, 'deposit', ?, ?)", [accountId, values.amount, values.transaction_date]);
+      await connection.query('UPDATE accounts SET balance = balance + ? WHERE id = ?', [values.amount, accountId]);
+      const [updated] = await connection.query('SELECT balance FROM accounts WHERE id = ?', [accountId]);
+      return { transaction_id: insert.insertId, type: 'deposit', amount: values.amount, new_balance: updated[0].balance, transaction_date: values.transaction_date };
     });
-
-    // Update account balance
-    const newBalance = parseFloat(account.balance) + numAmount;
-    await Account.updateBalance(account.id, newBalance);
-
-    res.status(201).json({
-      transaction_id: transactionId,
-      type: 'deposit',
-      amount: numAmount.toFixed(2),
-      new_balance: newBalance.toFixed(2),
-      transaction_date,
-    });
-  } catch (err) {
-    next(err);
-  }
+  } catch (error) { next(error); }
 };
 
-/**
- * POST /accounts/:id/withdraw
- *
- * Full withdrawal with interest calculation.
- * Follows the sequence diagram flow exactly:
- * 1. Fetch account → 404
- * 2. balance == 0 → 400
- * 3. Fetch last deposit → 400 if none
- * 4. Calculate ending_balance = balance + (balance × months × monthly_return)
- * 5. INSERT withdrawal transaction
- * 6. UPDATE account balance to 0
- * 7. Return 201 with full breakdown
- */
 exports.withdraw = async (req, res, next) => {
   try {
-    // Step 1: Fetch account
-    const account = await Account.findRawById(req.params.id);
-    if (!account) {
-      return res.status(404).json({ error: 'Account not found' });
-    }
-
-    const { transaction_date } = req.body;
-    if (!transaction_date) {
-      return res.status(400).json({ error: 'transaction_date is required' });
-    }
-
-    // Step 2: Guard — balance is 0
-    const balance = parseFloat(account.balance);
-    if (balance === 0) {
-      return res.status(400).json({ error: 'Account balance is 0, nothing to withdraw' });
-    }
-
-    // Step 3: Fetch last deposit
-    const lastDeposit = await Transaction.getLastDeposit(account.id);
-    if (!lastDeposit) {
-      return res.status(400).json({ error: 'No deposit found for this account' });
-    }
-
-    // Validate withdrawal date is after deposit date
-    const depositDate = new Date(lastDeposit.transaction_date);
-    const withdrawDate = new Date(transaction_date);
-    if (withdrawDate < depositDate) {
-      return res.status(400).json({ error: 'withdrawal_date must be after the deposit date' });
-    }
-
-    // Step 4: Get deposito type and calculate interest
-    const depositoType = await DepositoType.findById(account.deposito_type_id);
-    const yearlyReturn = parseFloat(depositoType.yearly_return);
-    const monthlyReturn = yearlyReturn / 12;
-
-    // Calculate months between deposit and withdrawal (integer months)
-    const monthsHeld =
-      (withdrawDate.getFullYear() - depositDate.getFullYear()) * 12 +
-      (withdrawDate.getMonth() - depositDate.getMonth());
-
-    const interestEarned = balance * monthsHeld * monthlyReturn;
-    const endingBalance = balance + interestEarned;
-
-    // Step 5: Insert withdrawal transaction
-    const transactionId = await Transaction.createWithdrawal({
-      account_id: account.id,
-      amount: balance,
-      ending_balance: endingBalance,
-      transaction_date,
+    const normalized = { transaction_date: validation.date(req.body.transaction_date) };
+    return financialMutation(req, res, next, 'withdrawal', normalized, async (connection, accountId, values) => {
+      const [accounts] = await connection.query('SELECT balance, yearly_return FROM accounts WHERE id = ? FOR UPDATE', [accountId]);
+      const account = accounts[0];
+      if (!account) throw new HttpError(404, 'Account not found');
+      if (account.balance === '0.00') throw new HttpError(409, 'Account balance is 0, nothing to withdraw');
+      const [latest] = await connection.query('SELECT transaction_date FROM transactions WHERE account_id = ? ORDER BY transaction_date DESC, id DESC LIMIT 1', [accountId]);
+      if (latest[0] && values.transaction_date < String(latest[0].transaction_date).slice(0, 10)) throw new HttpError(409, 'transaction_date cannot be older than the latest account transaction');
+      const [deposits] = await connection.query("SELECT transaction_date FROM transactions WHERE account_id = ? AND type = 'deposit' ORDER BY transaction_date DESC, id DESC LIMIT 1", [accountId]);
+      if (!deposits[0]) throw new HttpError(409, 'No deposit found for this account');
+      const [calculated] = await connection.query(
+        `SELECT TIMESTAMPDIFF(MONTH, ?, ?) AS months_held,
+                CAST(ROUND(? * TIMESTAMPDIFF(MONTH, ?, ?) * ? / 12, 2) AS DECIMAL(15,2)) AS interest_earned,
+                CAST(ROUND(? + (? * TIMESTAMPDIFF(MONTH, ?, ?) * ? / 12), 2) AS DECIMAL(15,2)) AS ending_balance`,
+        [deposits[0].transaction_date, values.transaction_date, account.balance, deposits[0].transaction_date, values.transaction_date, account.yearly_return,
+          account.balance, account.balance, deposits[0].transaction_date, values.transaction_date, account.yearly_return]
+      );
+      const calc = calculated[0];
+      const [insert] = await connection.query(
+        `INSERT INTO transactions (account_id, type, amount, starting_balance, interest_earned, months_held, yearly_return, ending_balance, transaction_date)
+         VALUES (?, 'withdrawal', ?, ?, ?, ?, ?, ?, ?)`,
+        [accountId, account.balance, account.balance, calc.interest_earned, calc.months_held, account.yearly_return, calc.ending_balance, values.transaction_date]
+      );
+      await connection.query('UPDATE accounts SET balance = 0.00 WHERE id = ?', [accountId]);
+      return { transaction_id: insert.insertId, type: 'withdrawal', starting_balance: account.balance, months_held: calc.months_held,
+        yearly_return: account.yearly_return, interest_earned: calc.interest_earned, ending_balance: calc.ending_balance, transaction_date: values.transaction_date };
     });
-
-    // Step 6: Set account balance to 0
-    await Account.updateBalance(account.id, 0);
-
-    // Step 7: Return full breakdown
-    res.status(201).json({
-      transaction_id: transactionId,
-      type: 'withdrawal',
-      starting_balance: balance.toFixed(2),
-      months_held: monthsHeld,
-      monthly_return: monthlyReturn.toFixed(6),
-      interest_earned: interestEarned.toFixed(2),
-      ending_balance: endingBalance.toFixed(2),
-      transaction_date,
-    });
-  } catch (err) {
-    next(err);
-  }
+  } catch (error) { next(error); }
 };

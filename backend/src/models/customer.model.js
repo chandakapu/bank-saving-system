@@ -4,11 +4,13 @@ class Customer {
   /**
    * Get all customers.
    */
-  static async findAll() {
+  static async findAll({ limit, offset }) {
     const [rows] = await pool.query(
-      'SELECT id, name, created_at, updated_at FROM customers ORDER BY id ASC'
+      'SELECT id, name, created_at, updated_at FROM customers ORDER BY id ASC LIMIT ? OFFSET ?',
+      [limit, offset]
     );
-    return rows;
+    const [counts] = await pool.query('SELECT COUNT(*) AS total FROM customers');
+    return { rows, total: counts[0].total };
   }
 
   /**

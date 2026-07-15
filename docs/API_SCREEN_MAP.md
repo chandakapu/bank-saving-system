@@ -2,6 +2,8 @@
 
 This document fulfills the requirement: **"APIs call every screen"**. It explicitly maps the visual screens defined in the wireframes (`wireframes.html`) to the backend REST API endpoints defined in `API_SPEC.md`.
 
+The login screen calls `POST /auth/login`; application startup calls `GET /auth/session` and `GET /health`; sign-out calls `POST /auth/logout`. All collection loads follow pagination until all pages needed by the dashboard are available.
+
 ## 1. Customers Screen
 Used for managing the bank's customers.
 *   **Load Data:** `GET /customers` (Populates the main data table)
@@ -29,12 +31,12 @@ Used for opening and managing customer accounts tied to specific deposito types.
 ## 4. Deposit Screen
 Dedicated screen for adding funds to an existing account.
 *   **Load Form Data:** `GET /accounts` (Populates the account selection dropdown)
-*   **Confirm Deposit:** `POST /accounts/:id/deposit` (Submits the deposit amount and date)
+*   **Confirm Deposit:** `POST /accounts/:id/deposit` (Submits the deposit amount/date with an idempotency key)
 
 ## 5. Withdraw Screen
 Dedicated screen for withdrawing all funds and calculating the interest.
 *   **Load Form Data:** `GET /accounts` (Populates the account selection dropdown)
-*   **Calculate & Withdraw:** `POST /accounts/:id/withdraw` (Submits the withdrawal date, and returns the calculated starting balance, months held, interest earned, and ending balance to display in the UI result card).
+*   **Calculate & Withdraw:** `POST /accounts/:id/withdraw` (Submits the withdrawal date with an idempotency key, and returns the calculated starting balance, months held, interest earned, and ending balance to display in the UI result card).
 
 ## 6. Transactions Screen
 Used for viewing the ledger/history of deposits and withdrawals.

@@ -4,56 +4,19 @@ class Transaction {
   /**
    * Get all transactions for an account.
    */
-  static async findByAccountId(accountId) {
+  static async findByAccountId(accountId, { limit, offset }) {
     const [rows] = await pool.query(
-      `SELECT id, type, amount, ending_balance, transaction_date, created_at
+      `SELECT id, type, amount, starting_balance, interest_earned, months_held,
+              yearly_return, ending_balance, transaction_date, created_at
        FROM transactions
        WHERE account_id = ?
-       ORDER BY created_at ASC`,
-      [accountId]
+       ORDER BY transaction_date ASC, id ASC LIMIT ? OFFSET ?`,
+      [accountId, limit, offset]
     );
-    return rows;
+    const [counts] = await pool.query('SELECT COUNT(*) AS total FROM transactions WHERE account_id = ?', [accountId]);
+    return { rows, total: counts[0].total };
   }
 
-  /**
-   * Insert a deposit transaction.
-   */
-  static async createDeposit({ account_id, amount, transaction_date }) {
-    const [result] = await pool.query(
-      `INSERT INTO transactions (account_id, type, amount, transaction_date)
-       VALUES (?, 'deposit', ?, ?)`,
-      [account_id, amount, transaction_date]
-    );
-    return result.insertId;
-  }
-
-  /**
-   * Insert a withdrawal transaction (with ending_balance).
-   */
-  static async createWithdrawal({ account_id, amount, ending_balance, transaction_date }) {
-    const [result] = await pool.query(
-      `INSERT INTO transactions (account_id, type, amount, ending_balance, transaction_date)
-       VALUES (?, 'withdrawal', ?, ?, ?)`,
-      [account_id, amount, ending_balance, transaction_date]
-    );
-    return result.insertId;
-  }
-
-  /**
-   * Get the most recent deposit for an account.
-   * Used to determine the start date for interest calculation.
-   */
-  static async getLastDeposit(accountId) {
-    const [rows] = await pool.query(
-      `SELECT id, amount, transaction_date, created_at
-       FROM transactions
-       WHERE account_id = ? AND type = 'deposit'
-       ORDER BY transaction_date DESC, created_at DESC
-       LIMIT 1`,
-      [accountId]
-    );
-    return rows[0] || null;
-  }
 }
 
 module.exports = Transaction;

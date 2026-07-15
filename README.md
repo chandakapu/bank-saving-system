@@ -12,15 +12,18 @@ The easiest way to run the entire system (Frontend, Backend, and MySQL) is using
     cd bank-saving-system
     ```
 
-2.  **Start the services**:
+2.  **Configure secrets and start the services**:
     ```bash
-    docker-compose up --build
+    cp .env.example .env
+    # Fill every blank secret in .env, then:
+    docker compose up --build
     ```
 
 3.  **Access the application**:
     - **Frontend**: [http://localhost](http://localhost)
-    - **Backend API**: [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
-    - **MySQL**: `localhost:3307` (User: `root`, Pass: `root`)
+    - **API through the frontend proxy**: [http://localhost/api/v1](http://localhost/api/v1)
+
+MySQL and the backend are private Docker services by default. The application bootstraps the configured administrator on first startup.
 
 ---
 
@@ -28,7 +31,7 @@ The easiest way to run the entire system (Frontend, Backend, and MySQL) is using
 
 The application has been deployed using free hosting services:
 - **Frontend (Live Demo)**: [https://bank-saving-system-rouge.vercel.app/](https://bank-saving-system-rouge.vercel.app/)
-- **Backend API**: [Render](https://render.com/)
+- **Backend API**: [https://bank-saving-api.onrender.com](https://bank-saving-api.onrender.com)
 - **Database**: [TiDB](https://en.pingcap.com/tidb-serverless/)
 
 ---
@@ -68,29 +71,31 @@ If you prefer to run the components individually:
 
 ### 1. Database Setup
 1. Create a database named `bank_saving_system`.
-2. Run the migration script: `database/migrations/migrations.sql`.
+2. For a new database, run `database/migrations/migrations.sql`. Existing databases are upgraded by the restart-safe backend migration runner.
 
 ### 2. Backend Setup
 1. `cd backend`
-2. `npm install`
+2. `npm ci`
 3. Create a `.env` file based on `.env.example` and configure your database credentials.
 4. `npm run dev`
 
 ### 3. Frontend Setup
 1. `cd frontend`
-2. `npm install`
+2. `npm ci`
 3. `npm run dev`
 
 ---
 
 ## Testing
 
-The backend includes a comprehensive integration test suite.
+The backend includes unit and MySQL integration tests. The frontend includes component and API client tests.
 
 ```bash
-cd backend
-# Ensure the server is running first
-bash test-api.sh
+cd frontend && npm test
+cd ../backend && npm test
+# Run the database suite against a disposable test database:
+TEST_DATABASE=1 TEST_DB_HOST=127.0.0.1 TEST_DB_USER=root \
+TEST_DB_PASSWORD=... TEST_DB_NAME=bank_saving_system npm test
 ```
 
 The test suite covers:
@@ -99,7 +104,9 @@ The test suite covers:
 - Account opening.
 - Deposit transactions.
 - **Withdrawal logic** (Interest calculation based on months held).
-- **Edge cases**: Zero balance prevention, `RESTRICT` deletion constraints.
+- **Edge cases**: concurrency, rollback, idempotency, strict dates/money, rate snapshots, and authorization.
+
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Render, Vercel, TiDB, secret rotation, and migration instructions.
 
 ---
 
